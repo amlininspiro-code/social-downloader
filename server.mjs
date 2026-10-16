@@ -8,9 +8,11 @@ import { randomUUID } from 'node:crypto';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const downloads = path.join(root, 'downloads');
-const engine = process.env.YTDLP_PATH || (existsSync(path.join(root, 'bin', 'yt-dlp.exe')) ? path.join(root, 'bin', 'yt-dlp.exe') : 'yt-dlp');
+const engine = process.env.YTDLP_PATH || (existsSync(path.join(root, 'bin', 'yt-dlp.exe')) ? path.join(root, 'bin', 'yt-dlp.exe') : existsSync(path.join(root, 'bin', 'yt-dlp')) ? path.join(root, 'bin', 'yt-dlp') : 'yt-dlp');
 const jobs = new Map(), media = new Map();
 const port = Number(process.env.PORT || 3000);
+const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, ...(process.env.ALLOWED_HOSTS || 'socialdownloader.dorpit.com,socialdownloader.amlininsparo.com').split(',').map(h => h.trim()).filter(Boolean)]);
+const allowedOrigins = new Set([`http://localhost:${port}`, `http://127.0.0.1:${port}`, ...[...allowedHosts].flatMap(h => [`https://${h}`, `http://${h}`])]);
 const baseArgs = ['--ignore-config', '--encoding', 'utf-8', '--no-playlist', '--no-warnings', '--socket-timeout', '25', '--retries', '2', '--js-runtimes', `node:${process.execPath}`];
 export function validateUrl(input) {
   let url; try { url = new URL(input); } catch { throw new Error('Paste a valid video link.'); }
@@ -72,8 +74,8 @@ export function createServer() { return http.createServer(async (req,res) => {
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Referrer-Policy','no-referrer');
   res.setHeader('Content-Security-Policy',"default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
-  if(!['127.0.0.1','localhost'].some(host => req.headers.host === `${host}:${port}`)) return json(res,403,{error:'Local access only.'});
-  if(req.headers.origin && ![`http://localhost:${port}`,`http://127.0.0.1:${port}`].includes(req.headers.origin)) return json(res,403,{error:'Origin not allowed.'});
+  if(!allowedHosts.has(req.headers.host)) return json(res,403,{error:'Host not allowed.'});
+  if(req.headers.origin && !allowedOrigins.has(req.headers.origin)) return json(res,403,{error:'Origin not allowed.'});
   const url = new URL(req.url,'http://localhost');
   try {
     if(req.method === 'GET' && url.pathname === '/api/health') {
