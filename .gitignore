@@ -1,4 +1,5 @@
 bin/
 downloads/
 node_modules/
+plugins/
 *.log
