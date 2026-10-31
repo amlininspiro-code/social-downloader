@@ -14,7 +14,7 @@ const port = Number(process.env.PORT || 3000);
 const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, ...(process.env.ALLOWED_HOSTS || 'socialdownloader.dorpit.com,socialdownloader.amlininsparo.com').split(',').map(h => h.trim()).filter(Boolean)]);
 const allowedOrigins = new Set([`http://localhost:${port}`, `http://127.0.0.1:${port}`, ...[...allowedHosts].flatMap(h => [`https://${h}`, `http://${h}`])]);
 const pluginsDir = path.join(root, 'plugins');
-const baseArgs = ['--ignore-config', '--encoding', 'utf-8', '--no-playlist', '--no-warnings', '--socket-timeout', '25', '--retries', '2', '--js-runtimes', `node:${process.execPath}`, ...(existsSync(pluginsDir) ? ['--plugin-dirs', pluginsDir] : []), ...(process.env.YTDLP_PROXY ? ['--proxy', process.env.YTDLP_PROXY] : [])];
+const baseArgs = ['--ignore-config', '--encoding', 'utf-8', '--no-playlist', '--no-warnings', '--socket-timeout', '25', '--retries', '2', '--js-runtimes', `node:${process.execPath}`, ...(existsSync(pluginsDir) ? ['--plugin-dirs', pluginsDir, '--extractor-args', 'youtube:fetch_pot=always'] : []), ...(process.env.YTDLP_PROXY ? ['--proxy', process.env.YTDLP_PROXY] : [])];
 export function validateUrl(input) {
   let url; try { url = new URL(input); } catch { throw new Error('Paste a valid video link.'); }
   const domains = ['youtube.com','youtu.be','instagram.com','tiktok.com','snapchat.com'];
